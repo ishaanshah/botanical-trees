@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# WandB
+wandb
+
+# Logs
+segmentation/output*.txt
+
+# Models
+segmentation/models
+
+# Datasets
+segmentation/dataset_small
