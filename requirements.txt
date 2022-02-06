@@ -1,0 +1,10 @@
+torch
+torchvision
+pytorch-lightning
+segmentation-models-pytorch
+Pillow
+opencv-python
+wandb
+tqdm
+jupyterlab
+matplotlib
