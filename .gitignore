@@ -139,3 +139,5 @@ segmentation/models
 
 # Datasets
 segmentation/dataset_small
+
+*.ckpt

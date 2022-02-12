@@ -3,14 +3,14 @@ import os
 import torch
 import glob
 import numpy as np
-from torchvision import transforms
-from torchvision.transforms import functional
+from . import utils
 from PIL import Image
+from torch.utils.data.dataset import Dataset
 
-
-class DataLoaderRBV(torch.utils.data.dataset.Dataset):
-    def __init__(self, folder_path, mode, use_gt=False):
+class DataLoaderRBV(Dataset):
+    def __init__(self, folder_path, mode, use_gt):
         super(DataLoaderRBV, self).__init__()
+        folder_path = os.path.join(folder_path, mode)
         self.info_files = glob.glob(os.path.join(folder_path, "Info", "*.*"))
         self.label_files = []
         self.mode = mode
@@ -22,27 +22,6 @@ class DataLoaderRBV(torch.utils.data.dataset.Dataset):
                 os.path.join(folder_path, label_dir, f"{info_filename}.png")
             )
 
-    def generate_coarse_rbv(self, rbv8):
-        """
-        Takes an 8x8 RBV and generates 1x1, 2x2 and 4x4 RBVx
-        """
-        rbvs = []
-        for i in range(3):
-            size = 2**i
-            step = 8 / size
-            rbv = np.zeros((size, size))
-            for j in range(size):
-                for k in range(size):
-                    rbv[j, k] = np.max(
-                        rbv8[
-                            j * step : (j + 1) * step, k * step : (k + 1) * step
-                        ]
-                    )
-
-            rbvs.append(rbv)
-
-        return rbvs
-
     def __getitem__(self, index):
         info_path = self.info_files[index]
         label_path = self.label_files[index]
@@ -50,23 +29,14 @@ class DataLoaderRBV(torch.utils.data.dataset.Dataset):
         with open(info_path) as f:
             rbv8 = np.asarray(json.load(f)["rbv"])
 
-        # Create a 3x256x256 tensor to be fed as input to the model
-        label = Image.open(label_path)
-        label = transforms.Resize(
-            (256, 256), interpolation=functional.InterpolationMode.NEAREST
-        )(label)
-        label_np = np.zeros((256, 256, 3))
-        label_np[label == 0, 0] = 1
-        label_np[label == 1, 1] = 1
-        label_np[label == 2, 2] = 1
-        label = functional.to_tensor(label_np)
+        label = utils.process_label(Image.open(label_path))
 
         # Generate 1x1, 2x2, 4x4 RBVs from 8x8
-        rbv1, rbv2, rbv4 = self.generate_coarse_rbv(rbv8)
-        rbv1 = torch.from_numpy(rbv1)
-        rbv2 = torch.from_numpy(rbv2)
-        rbv4 = torch.from_numpy(rbv4)
-        rbv8 = torch.from_numpy(rbv8)
+        rbv1, rbv2, rbv4 = utils.downsample_rbv(rbv8)
+        rbv1 = torch.from_numpy(rbv1).flatten().float()
+        rbv2 = torch.from_numpy(rbv2).flatten().float()
+        rbv4 = torch.from_numpy(rbv4).flatten().float()
+        rbv8 = torch.from_numpy(rbv8).flatten().float()
 
         return label, rbv1, rbv2, rbv4, rbv8
 
