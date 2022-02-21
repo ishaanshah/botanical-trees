@@ -1,25 +1,20 @@
 import json
-import os
 import torch
-import glob
 import numpy as np
 from . import utils
 from PIL import Image
 from torch.utils.data.dataset import Dataset
+from pathlib import Path
 
 class DataLoaderRBV(Dataset):
-    def __init__(self, folder_path, mode, use_gt):
+    def __init__(self, folder_path, use_gt):
         super(DataLoaderRBV, self).__init__()
-        folder_path = os.path.join(folder_path, mode)
-        self.info_files = glob.glob(os.path.join(folder_path, "Info", "*.*"))
+        self.info_files = list(Path(folder_path).glob("**/info.json"))
         self.label_files = []
-        self.mode = mode
-        self.use_gt = use_gt
         for info_file in self.info_files:
-            info_filename, _ = os.path.splitext(os.path.basename(info_file))
-            label_dir = "Labels" if use_gt else "LabelsPredicted"
+            filename = "gray_mask.png" if use_gt else "predicted_mask.png"
             self.label_files.append(
-                os.path.join(folder_path, label_dir, f"{info_filename}.png")
+                info_file.parent / Path(filename)
             )
 
     def __getitem__(self, index):
@@ -27,7 +22,7 @@ class DataLoaderRBV(Dataset):
         label_path = self.label_files[index]
 
         with open(info_path) as f:
-            rbv8 = np.asarray(json.load(f)["rbv"])
+            rbv8 = np.asarray(json.load(f)["norm_rbv"])
 
         label = utils.process_label(Image.open(label_path))
 

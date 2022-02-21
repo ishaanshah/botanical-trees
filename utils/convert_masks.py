@@ -25,8 +25,8 @@ parser.add_argument("data_root", type=str, help="Path of the directory which con
 args = parser.parse_args()
 
 root = Path(args.data_root)
-masks = sorted(root.glob("**/segmentation.png"))
+masks = sorted(root.glob("**/mask.png"))
 for mask in tqdm(masks):
     img = cv2.cvtColor(cv2.imread(str(mask)), cv2.COLOR_BGR2RGB)
     gray_img = convert_to_grayscale(img)
-    cv2.imwrite(str(mask.parent / "gray_segmentation.png"), gray_img)
+    cv2.imwrite(str(mask.parent / "gray_mask.png"), gray_img)

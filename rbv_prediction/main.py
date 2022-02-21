@@ -4,6 +4,7 @@ from pytorch_lightning.trainer import Trainer
 from pytorch_lightning.loggers import WandbLogger
 from src.model import RBVPredictor
 from src.dataloader import DataLoaderRBV
+from torch.utils.data import random_split, DataLoader
 
 def main(args):
     # Create logger object
@@ -16,28 +17,28 @@ def main(args):
     model = RBVPredictor(args)
 
     # Create dataloaders
-    datasets = {
-        x: DataLoaderRBV(args.dataset, x, args.use_gt)
-        for x in ["train", "val"]
-    }
-    dataloaders = {
-        x: torch.utils.data.DataLoader(
-            datasets[x], batch_size=args.batch_size, shuffle=True, num_workers=4
-        )
-        for x in ["train", "val"]
-    }
+    dataset = DataLoaderRBV(args.dataset, args.use_gt)
+    val_size = int(args.val_split * len(dataset))
+    train_size = len(dataset) - val_size
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    train_dataloader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4
+    )
+    val_dataloader = DataLoader(
+        val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4
+    )
 
     # Train the model
-    trainer.fit(model, dataloaders["train"], dataloaders["val"])
+    trainer.fit(model, train_dataloader, val_dataloader)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
 
     # Program specific arguments
-    parser.add_argument("--log", action="store_true", help="Log results to WandB")
-    parser.add_argument("--dataset", type=str, default="./dataset", help="Path to the datset")
-    parser.add_argument("--batch_size", type=int, default=10, help="Batch size to train with")
+    parser.add_argument("dataset", type=str, help="Path to the datset")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size to train with")
     parser.add_argument("--use_gt", action="store_true", default="./dataset", help="Should the model use ground truth segmentation masks for training")
+    parser.add_argument("--val_split", type=float, default=0.1, help="Percentage of dataset to use for validation")
 
     # Model specific arguments
     parser = RBVPredictor.add_model_specific_args(parser)

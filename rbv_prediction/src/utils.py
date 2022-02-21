@@ -1,26 +1,29 @@
 import numpy as np
+import cv2
 from torchvision import transforms
 from torchvision.transforms import functional
 
 def process_label(label):
     """
-    Creates a 3x256x256 tenser to be fed as input to the model
+    Creates a 3x256x256 tensor to be fed as input to the model
     """
 
     label = transforms.Resize(
         (256, 256), interpolation=functional.InterpolationMode.NEAREST
     )(label)
+    label = np.asarray(label)
     label_np = np.zeros((256, 256, 3))
     label_np[label == 0, 0] = 1
     label_np[label == 1, 1] = 1
     label_np[label == 2, 2] = 1
-    label = functional.to_tensor(label_np).float()
+    # cv2.imwrite("debug.png", label_np*255)
+    label = transforms.ToTensor()(label_np).float()
 
     return label
 
 def downsample_rbv(rbv8):
     """
-    Takes an 8x8 RBV and generates 1x1, 2x2 and 4x4 RBVx
+    Takes an 8x8 RBV and generates 1x1, 2x2 and 4x4 RBVs
     """
     rbvs = []
     for i in range(3):

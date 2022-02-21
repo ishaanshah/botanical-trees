@@ -15,7 +15,6 @@ class RBVPredictor(LightningModule):
         super().__init__()
 
         self.criterion = nn.HuberLoss()
-        self.accuracy = nn.CosineSimilarity()
         self.lr = args.lr
         self.encoder = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=64, padding=2, kernel_size=5),
@@ -156,10 +155,8 @@ class RBVPredictor(LightningModule):
         for i in range(len(y)):
             losses.append(self.criterion(y[i], yp[i]))
             error = torch.mean(torch.abs(y[i]-yp[i]))
-            acc = torch.mean(self.accuracy(y[i], yp[i]))
             self.log(f"train/loss_{2**i}", losses[i])
-            self.log(f"train/error_{2**i}", error)
-            self.log(f"train/acc_{2**i}", acc)
+            self.log(f"train/error_{2**i}", error, prog_bar=(i == 3))
         loss = sum(losses)
         return loss
 
@@ -170,10 +167,8 @@ class RBVPredictor(LightningModule):
         for i in range(len(y)):
             losses.append(self.criterion(y[i], yp[i]))
             error = torch.mean(torch.abs(y[i]-yp[i]))
-            acc = torch.mean(self.accuracy(y[i], yp[i]))
             self.log(f"val/loss_{2**i}", losses[i])
             self.log(f"val/error_{2**i}", error)
-            self.log(f"val/acc_{2**i}", acc)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
