@@ -1,0 +1,12 @@
+{
+	"Leaves": {
+		"Radius": 0.06,
+		"Density": [120.0, 150.0],
+		"Size": 0.5,
+		"Size Variation": 0.5,
+		"Deviation": 1.0,
+		"Randomness": [0.3, 0.7],
+		"Flatness": 0.1,
+		"Weight": 1.0
+	}
+}
