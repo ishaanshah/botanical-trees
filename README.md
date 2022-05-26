@@ -8,7 +8,7 @@ This repository is an unofficial implementation of the paper [Learning to Recons
 ![Banner](./media/banner.png)
 
 ## Requirements
-I recommend using conda environments for managing dependancies. I have provided a conda environment setup file which provides all the dependancies needed for the project. Create a conda environment by running:
+I recommend using conda environments for managing dependencies. I have provided a conda environment setup file which provides all the dependencies needed for the project. Create a conda environment by running:
 ```bash
 conda create --name <env> --file requirements.txt
 ```
